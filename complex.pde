@@ -19,13 +19,21 @@ public class complex{
     return new complex(new_real, new_imaginary);
   }
   
-  public complex squared_modulus(){
+  public double squared_modulus(){
     double abs_real = this.real * this.real;
     double abs_imag = this.imaginary * this.imaginary;
-    return new complex(abs_real, abs_imag);
+    return sqrt((float)(abs_real + abs_imag));
   }
-}
-
-complex add(complex c1, complex c2){
-  return new complex(c1.real + c2.real, c1.imaginary + c2.imaginary);
+  
+  public complex add(complex a){
+    return new complex(this.real + a.real, this.imaginary + a.imaginary);
+  }
+  
+  public complex mult(double a){
+    return new complex(this.real * a, this.imaginary * a);
+  }
+  
+  public complex mult(complex a){
+    return new complex((this.real * a.real) + (this.real * a.imaginary), (this.imaginary * a.imaginary) + (this.imaginary * a.real));
+  }
 }

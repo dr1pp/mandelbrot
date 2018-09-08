@@ -43,7 +43,7 @@ GUIController GUI;
 IFButton save, reset, getcoords;
 IFTextField iterationBox;
 
-int iterations;
+int N;
 float supersample = 1;
 int R;
 int threads;            
@@ -55,10 +55,12 @@ float percent = 0;
 
 public void setup() {
   
+  complex test = new complex(3,-2);
+  println(test.squared_modulus());
   settings = loadJSONObject("settings.json");
-  iterations = settings.getInt("iterations");
+  N = settings.getInt("N");
   R = settings.getInt("escape value");
-  println(width + "x" + height + " @" + iterations + "i");
+  println(width + "x" + height + " @" + N + "i");
   println("-----");
   background(0);
   colorMode(RGB);
@@ -84,7 +86,7 @@ public void setup() {
   save = new IFButton ("Save", 204, 1, 60, 19);
   reset = new IFButton ("Reset", 268, 1, 60, 19);
   getcoords = new IFButton("Get Coordinates", 385, 1, 100, 19);
-  iterationBox = new IFTextField("Iterations", 331, 1, 50, Integer.toString(iterations));
+  iterationBox = new IFTextField("N", 331, 1, 50, Integer.toString(N));
   iterationBox.setHeight(19);
   
   save.addActionListener(this);
@@ -131,21 +133,31 @@ public void renderSet() {
   i = 0;
 }
 
+double eps = 0.1f;
+
 public int drawPoint(int x, int y, int count) {
   double real = doubleMap(x, 0, m.width, lowerReal, upperReal);
   double imag = doubleMap(y, 0, m.height, upperImag, lowerImag);
   complex c = new complex(real, imag);
   complex z = new complex(0, 0);
-  int i = 0;
-  while (i < iterations) { 
-    if (z.real < R && z.imaginary < R) { 
-      z = calculate(z, c); 
-      i++;
-    } else { 
-      break; // Bail
+  complex der = new complex(1, 0);
+  int n = 0;
+  int colour = color(0);
+  while (n < N) { 
+    if (der.squared_modulus() < eps * eps){
+      colour = color(0);
+      break;
     }
+    if (z.squared_modulus() > (R*R)){
+      colour = findColour(n);
+      println(n);
+      break;
+    } 
+    der = (der.mult(2)).mult(z);
+    z = calculate(z, c);
+    println(z.real, z.imaginary);
+    n++;
   }
-  int colour = findColour(i); // Finds colour based on iterations
   m.pixels[x+(y*m.width)] = colour; // Colours pixel
   count += 1;
   return count;
@@ -153,7 +165,7 @@ public int drawPoint(int x, int y, int count) {
 
 
 public int findColour(int i) {
-  i = floor(map(i, 0, iterations, 0, colourRange.width-1));
+  i = floor(map(i, 0, N, 0, colourRange.width-1));
   int colour = colourRange.pixels[i];
   return colour;
 }
@@ -161,8 +173,8 @@ public int findColour(int i) {
 public int smoothColour(int i) {
   colorMode(HSB, 255);
   int colour;
-  if (i != iterations) {
-    colour = color(map(i, 0, iterations, 0, 255), 255, 255);
+  if (i != N) {
+    colour = color(map(i, 0, N, 0, 255), 255, 255);
   } else {
     colour = color(0, 0, 0);
   }
@@ -171,8 +183,7 @@ public int smoothColour(int i) {
 
 
 public complex calculate(complex z, complex c) {
-  complex z2 = z.square();
-  return add(z2, c);
+  return z.square().add(c);
 }
 
 public void drawUI() {
@@ -254,7 +265,7 @@ public void mouseWheel(MouseEvent event) {
 
 public void saveView(){
   String timeString = hour() + "-" + minute() + "-" + second() + " " + day() + "-" + month() + "-" + year();
-  String filename = Integer.toString(iterations) + "i " + Integer.toString(width) + "x" + Integer.toString(height) + " " + timeString + ".png";
+  String filename = Integer.toString(N) + "i " + Integer.toString(width) + "x" + Integer.toString(height) + " " + timeString + ".png";
   m.save(filename);
   println("File saved");
 }
@@ -278,7 +289,7 @@ public void actionPerformed (GUIEvent e) {
     double currentImag = doubleMap(mouseY, 0, (double)height, upperImag, lowerImag);
     println(currentReal + " + " + currentImag + "i, " + zoomLevel + "x");
   } else if (e.getMessage().equals("Completed")) {
-    iterations = Integer.parseInt(iterationBox.getValue());
+    N = Integer.parseInt(iterationBox.getValue());
     thread("renderSet");
   }
 }
@@ -294,12 +305,12 @@ public void gradientSelected(File gradient) {
 }
 
 
-public void stats(int total, float time, int iterations) {
+public void stats(int total, float time, int N) {
   println("-----");
   println("Finished");
   println("Computed", total, "pixels");
   println("Took", time, "seconds");
-  println("[JAVA]", time + "s for", width + "x" + height, "@", iterations + "i");
+  println("[JAVA]", time + "s for", width + "x" + height, "@", N + "i");
 }
 public class complex{
   
@@ -322,15 +333,23 @@ public class complex{
     return new complex(new_real, new_imaginary);
   }
   
-  public complex squared_modulus(){
+  public double squared_modulus(){
     double abs_real = this.real * this.real;
     double abs_imag = this.imaginary * this.imaginary;
-    return new complex(abs_real, abs_imag);
+    return sqrt((float)(abs_real + abs_imag));
   }
-}
-
-public complex add(complex c1, complex c2){
-  return new complex(c1.real + c2.real, c1.imaginary + c2.imaginary);
+  
+  public complex add(complex a){
+    return new complex(this.real + a.real, this.imaginary + a.imaginary);
+  }
+  
+  public complex mult(double a){
+    return new complex(this.real * a, this.imaginary * a);
+  }
+  
+  public complex mult(complex a){
+    return new complex((this.real * a.real) + (this.real * a.imaginary), (this.imaginary * a.imaginary) + (this.imaginary * a.real));
+  }
 }
 public double doubleMap(double value, double istart, double istop, double ostart, double ostop) {
     return ostart + (ostop - ostart) * ((value - istart) / (istop - istart));

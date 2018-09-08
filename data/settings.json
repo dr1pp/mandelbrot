@@ -1,6 +1,6 @@
 {
-  "escape value": 16,
-  "iterations": 300,
+  "escape value": 2,
+  "N": 300,
   "threads": 4,
   "fullscreen": false
 }
