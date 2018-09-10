@@ -239,19 +239,6 @@ public void mouseWheel(MouseEvent event) {
   }
 }
 
-
-//void keyPressed() {
-//  } else if (key == 'r' || key == 'R') {
-//    resetView();
-//  } else if (key == 'o' || key == 'O') {
-//    selectInput("Select a custom colour grandient with black as the last pixel", "gradientSelected");
-//  } else if (key == ' ') {
-//    double currentReal = doubleMap(mouseX, 0, width, lowerReal, upperReal);
-//    double currentImag = doubleMap(mouseY, 0, (double)height, upperImag, lowerImag);
-//    println(currentReal + " + " + currentImag + "i, " + zoomLevel + "x");
-//  }
-//}
-
 public void saveView(){
   String timeString = hour() + "-" + minute() + "-" + second() + " " + day() + "-" + month() + "-" + year();
   String filename = Integer.toString(iterations) + "i " + Integer.toString(width) + "x" + Integer.toString(height) + " " + timeString + ".png";
